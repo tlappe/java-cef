@@ -42,6 +42,7 @@ import org.cef.network.CefRequest;
 import org.cef.network.CefRequest.TransitionType;
 import org.cef.network.CefResponse;
 import org.cef.network.CefURLRequest;
+import org.cef.security.CefSSLInfo;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -101,7 +102,7 @@ public class CefClient extends CefClientHandler
      * The CTOR is only accessible within this package.
      * Use CefApp.createClient() to create an instance of
      * this class.
-     * @see org.cef.CefApp.createClient()
+     * @see org.cef.CefApp#createClient()
      */
     CefClient() throws UnsatisfiedLinkError {
         super();
@@ -554,7 +555,7 @@ public class CefClient extends CefClientHandler
         if (browser == null) return;
 
         // keep browser reference
-        Integer identifier = browser.getIdentifier();
+        Integer identifier = Integer.valueOf(browser.getIdentifier());
         synchronized (browser_) {
             browser_.put(identifier, browser);
         }
@@ -588,7 +589,7 @@ public class CefClient extends CefClientHandler
         synchronized (browser_) {
             if (identifier >= 0) {
                 // Remove the specific browser that closed.
-                browser_.remove(identifier);
+                browser_.remove(Integer.valueOf(identifier));
             } else if (!browser_.isEmpty()) {
                 // Close all browsers.
                 Collection<CefBrowser> browserList = browser_.values();
@@ -845,9 +846,9 @@ public class CefClient extends CefClientHandler
 
     @Override
     public boolean onCertificateError(
-            CefBrowser browser, ErrorCode cert_error, String request_url, CefCallback callback) {
+            CefBrowser browser, ErrorCode cert_error, String request_url, CefSSLInfo sslInfo, CefCallback callback) {
         if (requestHandler_ != null)
-            return requestHandler_.onCertificateError(browser, cert_error, request_url, callback);
+            return requestHandler_.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
         return false;
     }
 
