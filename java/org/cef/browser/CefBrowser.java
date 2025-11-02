@@ -50,6 +50,13 @@ public interface CefBrowser {
     public CefRenderHandler getRenderHandler();
 
     /**
+     * Retrieves the request context used by this browser instance. May be the
+     * global request context if this browser does not have a specific request
+     * context.
+     */
+    public CefRequestContext getRequestContext();
+
+    /**
      * Get an implementation of CefWindowHandler if any.
      * @return An instance of CefWindowHandler or null.
      */
@@ -337,18 +344,21 @@ public interface CefBrowser {
     public void stopFinding(boolean clearSelection);
 
     /**
-     * Get an instance of the DevTools to be displayed in its own window or to be
-     * embedded within your UI. Only one instance per browser is available.
+     * Get an instance of the DevTools to be displayed in its own window.
      */
-    public CefBrowser getDevTools();
+    public void openDevTools();
 
     /**
-     * Get an instance of the DevTools to be displayed in its own window or to be
-     * embedded within your UI. Only one instance per browser is available.
+     * Open an instance of the DevTools to be displayed in its own window.
      *
      * @param inspectAt a position in the UI which should be inspected.
      */
-    public CefBrowser getDevTools(Point inspectAt);
+    public void openDevTools(Point inspectAt);
+
+    /**
+     * Close the DevTools.
+     */
+    public void closeDevTools();
 
     /**
      * Get an instance of a client that can be used to leverage the DevTools
