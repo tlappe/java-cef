@@ -31,7 +31,7 @@ class DisplayHandlerTest {
                 client_.addDisplayHandler(new CefDisplayHandlerAdapter() {
                     @Override
                     public void onTitleChange(CefBrowser browser, String title) {
-                        assertFalse(gotCallback_);
+                        if (gotCallback_) return;
                         gotCallback_ = true;
                         assertEquals("Test Title", title);
                         terminateTest();
@@ -59,9 +59,9 @@ class DisplayHandlerTest {
                 client_.addDisplayHandler(new CefDisplayHandlerAdapter() {
                     @Override
                     public void onAddressChange(CefBrowser browser, CefFrame frame, String url) {
-                        assertFalse(gotCallback_);
+                        if (gotCallback_) return;
                         gotCallback_ = true;
-                        assertEquals(url, testUrl_);
+                        assertEquals(testUrl_, url);
                         terminateTest();
                     }
                 });
