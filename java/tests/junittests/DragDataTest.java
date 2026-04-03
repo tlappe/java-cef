@@ -80,12 +80,12 @@ class DragDataTest {
         dragData.addFile(path1, "File 1");
         dragData.addFile(path2, "File 2");
 
-        Vector<String> fileNames = new Vector<>();
-        assertTrue(dragData.getFileNames(fileNames));
+        Vector<String> filePaths = new Vector<>();
+        assertTrue(dragData.getFilePaths(filePaths));
 
-        assertEquals(2, fileNames.size());
-        assertEquals(path1, fileNames.get(0));
-        assertEquals(path2, fileNames.get(1));
+        assertEquals(2, filePaths.size());
+        assertEquals(path1, filePaths.get(0));
+        assertEquals(path2, filePaths.get(1));
 
         assertFalse(dragData.isLink());
         assertTrue(dragData.isFile());
