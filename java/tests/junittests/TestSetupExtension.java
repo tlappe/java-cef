@@ -57,30 +57,38 @@ public class TestSetupExtension
 
         // Ensure native binaries are available (download if necessary).
         try {
-            final File nativesDir = NativesInstaller.ensureInstalled();
+            File nativesDir = NativesInstaller.ensureInstalled();
 
-            // Register a custom loader that loads native libraries from the
-            // installed directory using absolute paths, bypassing java.library.path.
+            // Find the actual directory containing the native libraries.
+            // The binary_distrib tar.gz may nest them (e.g. bin/lib/win64/).
+            File jcefDll = findLibrary(nativesDir, NativesInstaller.mapLibraryName("jcef"));
+            File libDir = jcefDll != null ? jcefDll.getParentFile() : nativesDir;
+
+            // Add the CEF natives directory to java.library.path so that
+            // CefApp.getJcefLibPath() can locate jcef.dll and resolve
+            // browser_subprocess_path correctly.
+            String currentPath = System.getProperty("java.library.path", "");
+            String separator = System.getProperty("path.separator");
+            System.setProperty("java.library.path",
+                    libDir.getAbsolutePath() + separator + currentPath);
+
+            // Register a custom loader that loads CEF native libraries from
+            // the installed directory using absolute paths. This is necessary
+            // because java.library.path changes at runtime are not picked up
+            // by the default System.loadLibrary().
+            final File finalLibDir = libDir;
             SystemBootstrap.setLoader(new SystemBootstrap.Loader() {
                 @Override
                 public void loadLibrary(String libname) {
                     if ("jawt".equals(libname)) {
-                        // jawt is part of the JDK, load normally
                         System.loadLibrary(libname);
                     } else {
                         String fileName = NativesInstaller.mapLibraryName(libname);
-                        File libFile = new File(nativesDir, fileName);
+                        File libFile = new File(finalLibDir, fileName);
                         if (libFile.exists()) {
                             System.load(libFile.getAbsolutePath());
                         } else {
-                            // Fallback: try subdirectories (binary_distrib layout)
-                            File found = findLibrary(nativesDir, fileName);
-                            if (found != null) {
-                                System.load(found.getAbsolutePath());
-                            } else {
-                                // Last resort: system default
-                                System.loadLibrary(libname);
-                            }
+                            System.loadLibrary(libname);
                         }
                     }
                 }
@@ -96,7 +104,15 @@ public class TestSetupExtension
             return;
         }
 
-        CefApp.addAppHandler(new CefAppHandlerAdapter(null) {
+        // Map the fictitious SSL test domain to 127.0.0.1 so that Chromium
+        // treats it as an external host and fires onCertificateError for
+        // self-signed certificates. Without this, Chromium skips cert checks
+        // for localhost and private IPs ("potentially trustworthy origins").
+        String[] cefArgs = {
+            "--host-resolver-rules=MAP jcef-test.invalid 127.0.0.1"
+        };
+
+        CefApp.addAppHandler(new CefAppHandlerAdapter(cefArgs) {
             @Override
             public void stateHasChanged(org.cef.CefApp.CefAppState state) {
                 if (state == CefAppState.TERMINATED) {
