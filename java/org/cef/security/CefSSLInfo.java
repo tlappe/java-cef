@@ -10,10 +10,10 @@ package org.cef.security;
 
 public class CefSSLInfo {
     public CefSSLInfo(int statusBitset, CefX509Certificate certificate) {
-        this.statusBiset = statusBitset;
+        this.statusBitset = statusBitset;
         this.certificate = certificate;
     }
 
-    public final int statusBiset;
+    public final int statusBitset;
     public final CefX509Certificate certificate;
 }

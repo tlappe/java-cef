@@ -26,6 +26,53 @@ import java.util.Base64;
 
 @ExtendWith(TestSetupExtension.class)
 class SelfSignedSSLTest {
+    private static class SSLAcceptTestFrame extends TestFrame {
+        CefSSLInfo sslInfo;
+
+        SSLAcceptTestFrame(String url) {
+            super(url);
+        }
+
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+            super.onLoadEnd(browser, frame, httpStatusCode);
+            terminateTest();
+        }
+
+        @Override
+        public boolean onCertificateError(CefBrowser browser, ErrorCode cert_error, String request_url, CefSSLInfo sslInfo, CefCallback callback) {
+            this.sslInfo = sslInfo;
+            callback.Continue();
+            return true;
+        }
+    }
+
+    private static class SSLRejectTestFrame extends TestFrame {
+        boolean isOnCertificateErrorCalled = false;
+        boolean isOnLoadErrorCalled = false;
+
+        SSLRejectTestFrame(String url) {
+            super(url);
+        }
+
+        @Override
+        public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+            super.onLoadEnd(browser, frame, httpStatusCode);
+            terminateTest();
+        }
+
+        @Override
+        public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+            isOnLoadErrorCalled = true;
+            super.onLoadError(browser, frame, errorCode, errorText, failedUrl);
+        }
+
+        @Override
+        public boolean onCertificateError(CefBrowser browser, ErrorCode cert_error, String request_url, CefSSLInfo sslInfo, CefCallback callback) {
+            isOnCertificateErrorCalled = true;
+            return false;
+        }
+    }
     /*
     Base64 encoded Java Keystore Data.
     Generate a self-signed certificate:
@@ -106,33 +153,12 @@ class SelfSignedSSLTest {
         HttpsServer server = makeHttpsServer(keyStore);
         server.start();
 
-        var frame = new TestFrame() {
-            public CefSSLInfo sslInfo = null;
+        SSLAcceptTestFrame myFrame = new SSLAcceptTestFrame("https:/" + server.getAddress());
 
-            @Override
-            protected void setupTest() {
-                createBrowser("https:/" + server.getAddress());
-                super.setupTest();
-            }
+        myFrame.awaitCompletion();
 
-            @Override
-            public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-                super.onLoadEnd(browser, frame, httpStatusCode);
-                terminateTest();
-            }
-
-            @Override
-            public boolean onCertificateError(CefBrowser browser, ErrorCode cert_error, String request_url, CefSSLInfo sslInfo, CefCallback callback) {
-                this.sslInfo = sslInfo;
-                callback.Continue();
-                return true;
-            }
-        };
-
-        frame.awaitCompletion();
-
-        Assertions.assertArrayEquals(certificateChainExpected, frame.sslInfo.certificate.getCertificatesChain());
-        Assertions.assertTrue(CefCertStatus.CERT_STATUS_AUTHORITY_INVALID.hasStatus(frame.sslInfo.statusBiset));
+        Assertions.assertArrayEquals(certificateChainExpected, myFrame.sslInfo.certificate.getCertificatesChain());
+        Assertions.assertTrue(CefCertStatus.CERT_STATUS_AUTHORITY_INVALID.hasStatus(myFrame.sslInfo.statusBitset));
         server.stop(0);
     }
 
@@ -142,34 +168,7 @@ class SelfSignedSSLTest {
         HttpsServer server = makeHttpsServer(keyStore);
         server.start();
 
-        var frame = new TestFrame() {
-            boolean isOnCertificateErrorCalled = false;
-            boolean isOnLoadErrorCalled = false;
-
-            @Override
-            protected void setupTest() {
-                createBrowser("https:/" + server.getAddress());
-                super.setupTest();
-            }
-
-            @Override
-            public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-                super.onLoadEnd(browser, frame, httpStatusCode);
-                terminateTest();
-            }
-
-            @Override
-            public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-                isOnLoadErrorCalled = true;
-                super.onLoadError(browser, frame, errorCode, errorText, failedUrl);
-            }
-
-            @Override
-            public boolean onCertificateError(CefBrowser browser, ErrorCode cert_error, String request_url, CefSSLInfo sslInfo, CefCallback callback) {
-                isOnCertificateErrorCalled = true;
-                return false;
-            }
-        };
+        SSLRejectTestFrame frame = new SSLRejectTestFrame("https:/" + server.getAddress());
 
         frame.awaitCompletion();
         Assertions.assertTrue(frame.isOnCertificateErrorCalled);

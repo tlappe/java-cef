@@ -8,7 +8,6 @@ import org.cef.CefApp;
 import org.cef.CefApp.CefAppState;
 import org.cef.CefClient;
 import org.cef.CefSettings;
-import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefAppHandlerAdapter;
@@ -36,11 +35,9 @@ import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -288,7 +285,7 @@ public class MainFrame extends JFrame {
         page.append(")<br/><h3>X.509 Certificate Information:</h3>Certificate status: ");
         page.append(Arrays.stream(CefCertStatus.values())
                 .skip(1) // skip CERT_STATUS_NONE
-                .filter(status -> status.hasStatus(info.statusBiset))
+                .filter(status -> status.hasStatus(info.statusBitset))
                 .map(Enum::toString)
                 .collect(Collectors.joining(", ")));
         page.append("<h4>Certificated chain(from subject to issuers):</h4>");

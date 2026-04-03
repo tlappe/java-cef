@@ -56,7 +56,14 @@ class TestFrame extends JFrame implements CefLifeSpanHandler, CefLoadHandler, Ce
     protected final CefClient client_;
     protected CefBrowser browser_ = null;
 
+    private final String startURL_;
+
     TestFrame() {
+        this(null);
+    }
+
+    TestFrame(String startURL) {
+        startURL_ = startURL;
         client_ = CefApp.getInstance().createClient();
         assertNotNull(client_);
 
@@ -116,7 +123,11 @@ class TestFrame extends JFrame implements CefLifeSpanHandler, CefLoadHandler, Ce
     }
 
     // Override this method to perform test setup.
-    protected void setupTest() {}
+    protected void setupTest() {
+        if (startURL_ != null) {
+            createBrowser(startURL_);
+        }
+    }
 
     // Override this method to perform test cleanup.
     protected void cleanupTest() {

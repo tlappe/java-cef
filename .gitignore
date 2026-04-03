@@ -45,6 +45,7 @@ Thumbs.db
 # JCEF generated directories
 /binary_distrib
 /jcef_build
+/jcef-natives
 /out
 # JCEF generated files
 /native/jcef_version.h
