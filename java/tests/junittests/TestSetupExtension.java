@@ -104,15 +104,7 @@ public class TestSetupExtension
             return;
         }
 
-        // Map the fictitious SSL test domain to 127.0.0.1 so that Chromium
-        // treats it as an external host and fires onCertificateError for
-        // self-signed certificates. Without this, Chromium skips cert checks
-        // for localhost and private IPs ("potentially trustworthy origins").
-        String[] cefArgs = {
-            "--host-resolver-rules=MAP jcef-test.invalid 127.0.0.1"
-        };
-
-        CefApp.addAppHandler(new CefAppHandlerAdapter(cefArgs) {
+        CefApp.addAppHandler(new CefAppHandlerAdapter(null) {
             @Override
             public void stateHasChanged(org.cef.CefApp.CefAppState state) {
                 if (state == CefAppState.TERMINATED) {
